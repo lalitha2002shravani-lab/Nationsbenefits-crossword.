@@ -1,0 +1,9 @@
+{
+  "name": "nationsbenefits-crossword",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive crossword with a shared, cross-device leaderboard for the Nationsbenefits newsletter.",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

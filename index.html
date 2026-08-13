@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nationsbenefits Crossword</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f2faf9;
+    --surface:#ffffff;
+    --primary:#0b7a75;
+    --primary-dark:#075e5a;
+    --accent:#16c2b4;
+    --navy:#132a3a;
+    --text:#1f2937;
+    --muted:#657282;
+    --success:#1fa971;
+    --success-bg:#e6f7ef;
+    --error:#e4574c;
+    --error-bg:#fdeceb;
+    --border:#dbeae7;
+    --cell:#ffffff;
+    --cell-block:transparent;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(19,42,58,.06), 0 8px 24px rgba(19,42,58,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 500px at 10% -10%, #d9f3ee 0%, transparent 60%),
+      radial-gradient(900px 500px at 110% 0%, #e7f7f2 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,h3{font-family:'Sora',system-ui,sans-serif;margin:0;}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 64px;}
+
+  header.top{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    margin-bottom:22px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:42px;height:42px;border-radius:12px;
+    background:linear-gradient(135deg,var(--accent),var(--primary-dark));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:18px;
+    box-shadow:var(--shadow);
+    flex-shrink:0;
+  }
+  .brand h1{font-size:22px;color:var(--navy);letter-spacing:.2px;}
+  .brand p{margin:2px 0 0;font-size:13px;color:var(--muted);}
+
+  .timer-pill{
+    background:var(--surface);border:1px solid var(--border);border-radius:999px;
+    padding:10px 18px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);
+  }
+  .timer-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+  .timer-pill.running .dot{animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+  .timer-pill span{font-family:'Sora',sans-serif;font-weight:700;font-size:16px;color:var(--navy);}
+
+  .layout{
+    display:grid;
+    grid-template-columns: minmax(0,1.15fr) minmax(280px,.85fr);
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width: 880px){ .layout{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:16px;
+    padding:20px;box-shadow:var(--shadow);
+  }
+  .card + .card{margin-top:18px;}
+
+  .board-scroll{overflow:auto;padding-bottom:6px;}
+  #grid{
+    border-collapse:collapse;margin:0 auto;
+  }
+  #grid td{
+    width:34px;height:34px;border:1px solid #cfe4e0;position:relative;padding:0;
+    background:var(--cell-block);
+  }
+  #grid td.cell{background:var(--cell);}
+  #grid td.cell.active{background:#cdeee8;}
+  #grid td.cell.active-word{background:#e6f7f3;}
+  #grid td.cell.correct{background:var(--success-bg);}
+  #grid td.cell.incorrect{background:var(--error-bg);}
+  .num-label{
+    position:absolute;top:1px;left:2px;font-size:9px;font-weight:700;color:var(--primary-dark);
+    line-height:1;user-select:none;pointer-events:none;
+  }
+  #grid input{
+    width:100%;height:100%;border:none;background:transparent;text-align:center;
+    font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:var(--navy);
+    text-transform:uppercase;padding:0;outline:none;caret-color:var(--primary);
+  }
+  #grid input:disabled{color:var(--muted);}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  button{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;
+    border-radius:10px;border:1px solid transparent;padding:10px 16px;transition:transform .05s ease, opacity .15s ease;
+  }
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover:not(:disabled){background:var(--primary-dark);}
+  .btn-ghost{background:#fff;color:var(--primary-dark);border-color:var(--border);}
+  .btn-ghost:hover:not(:disabled){border-color:var(--primary);}
+  .btn-accent{background:var(--accent);color:#04302c;}
+  .btn-accent:hover:not(:disabled){filter:brightness(.95);}
+
+  .clue-active-banner{
+    margin-top:14px;padding:10px 14px;border-radius:10px;background:#eefaf7;
+    border:1px solid #cdeee8;font-size:14px;color:var(--navy);min-height:18px;
+  }
+  .clue-active-banner b{color:var(--primary-dark);}
+
+  .clues{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:520px){.clues{grid-template-columns:1fr;}}
+  .clues h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--primary-dark);margin-bottom:8px;}
+  .clues ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+  .clues li{font-size:13.5px;line-height:1.4;color:var(--text);cursor:pointer;padding:6px 8px;border-radius:8px;}
+  .clues li:hover{background:#f0f8f6;}
+  .clues li.active{background:var(--primary);color:#fff;}
+  .clues li b{font-weight:700;margin-right:5px;color:inherit;}
+
+  .score-panel{display:none;margin-top:16px;padding:16px;border-radius:12px;background:linear-gradient(135deg,#0b7a75,#0a5a56);color:#fff;}
+  .score-panel.show{display:block;}
+  .score-panel .big{font-family:'Sora',sans-serif;font-weight:800;font-size:34px;line-height:1;}
+  .score-panel .stats{display:flex;gap:18px;margin-top:10px;font-size:13px;opacity:.9;flex-wrap:wrap;}
+  .score-panel input[type=text],.score-panel input[type=email]{
+    margin-top:14px;width:100%;padding:11px 12px;border-radius:8px;border:none;font-size:14px;font-family:'Inter',sans-serif;
+  }
+  .score-panel .row{display:flex;gap:10px;margin-top:10px;}
+  .score-panel .row button{flex:1;}
+
+  table.leaderboard{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.leaderboard th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    padding:6px 8px;border-bottom:1px solid var(--border);
+  }
+  table.leaderboard td{padding:8px;border-bottom:1px solid #eef4f3;}
+  table.leaderboard tr:first-child td{font-weight:700;}
+  .rank-badge{
+    display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+    background:#eefaf7;color:var(--primary-dark);font-size:11.5px;font-weight:800;
+  }
+  .rank-1 .rank-badge{background:#ffe7a3;color:#7a5a00;}
+  .rank-2 .rank-badge{background:#e3e8ee;color:#3c4753;}
+  .rank-3 .rank-badge{background:#f3dcc6;color:#7a4319;}
+  .lb-empty{color:var(--muted);font-size:13px;padding:10px 4px;}
+  .lb-status{font-size:12px;color:var(--muted);margin-top:10px;}
+  .lb-status.error{color:var(--error);}
+
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:30px;}
+  .small-muted{font-size:12px;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">NB</div>
+      <div>
+        <h1>Nationsbenefits Crossword</h1>
+        <p>Test your benefits &amp; healthtech knowledge</p>
+      </div>
+    </div>
+    <div class="timer-pill" id="timerPill">
+      <span class="dot"></span>
+      <span id="timerText">00:00</span>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <div>
+      <div class="card">
+        <div class="board-scroll">
+          <table id="grid"></table>
+        </div>
+        <div class="clue-active-banner" id="activeClueBanner">Click a square or a clue to begin.</div>
+        <div class="controls">
+          <button class="btn-primary" id="checkBtn">Check progress</button>
+          <button class="btn-accent" id="finishBtn">Finish &amp; see score</button>
+          <button class="btn-ghost" id="resetBtn">Reset puzzle</button>
+        </div>
+        <div class="score-panel" id="scorePanel">
+          <div class="small-muted" style="color:#cdeee8;text-transform:uppercase;letter-spacing:.08em;font-size:11px;">Your result</div>
+          <div class="big" id="scoreBig">0 pts</div>
+          <div class="stats">
+            <div id="statCorrect">0 / 0 words correct</div>
+            <div id="statTime">Time: 00:00</div>
+          </div>
+          <input type="text" id="nameInput" placeholder="Your name" maxlength="60" />
+          <input type="email" id="emailInput" placeholder="Your email" maxlength="120" />
+          <div class="row">
+            <button class="btn-accent" id="submitScoreBtn">Submit to leaderboard</button>
+          </div>
+          <div class="small-muted" id="submitStatus" style="color:#e6f7f3;margin-top:8px;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="clues">
+          <div>
+            <h3>Across</h3>
+            <ol id="acrossList"></ol>
+          </div>
+          <div>
+            <h3>Down</h3>
+            <ol id="downList"></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3 style="font-size:16px;color:var(--navy);margin-bottom:2px;">Leaderboard</h3>
+        <p class="small-muted" style="margin:2px 0 12px;">Shared across every reader &amp; device.</p>
+        <table class="leaderboard">
+          <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th></tr></thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+        <div id="lbEmpty" class="lb-empty" style="display:none;">No scores yet — be the first to finish!</div>
+        <div class="controls" style="margin-top:14px;">
+          <button class="btn-ghost" id="refreshLbBtn">Refresh</button>
+          <button class="btn-ghost" id="exportCsvBtn">Export CSV</button>
+        </div>
+        <div class="lb-status" id="lbStatus"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Built for the Nationsbenefits newsletter · Scores are stored centrally and visible to everyone who plays.</footer>
+</div>
+
+<script>
+/* ============================================================
+   1) PUZZLE CONTENT
+   Edit this list to change the crossword. "clue" is what's shown;
+   "answer" must be A-Z only (no spaces/punctuation).
+   ============================================================ */
+const WORDS = [
+  { answer: "COINSURANCE",  clue: "The percentage of an allowed healthcare expense paid by the member after meeting the deductible" },
+  { answer: "ADJUDICATION", clue: "The process of determining the amount a health plan will pay toward a submitted claim" },
+  { answer: "DEDUCTIBLE",   clue: "The amount a member pays before insurance coverage begins" },
+  { answer: "TELEHEALTH",   clue: "Technology used to deliver healthcare services remotely" },
+  { answer: "CLAIM",        clue: "A financial transaction between a healthcare provider and payer" },
+  { answer: "ELIGIBILITY",  clue: "The process of determining whether a patient is covered for a particular healthcare service" },
+  { answer: "RECOUPMENT",   clue: "The process of recovering money paid incorrectly or in excess on a healthcare claim" },
+  { answer: "ERA",          clue: "The standardized electronic transaction used to communicate healthcare claim payment information" },
+  { answer: "COMPLIANCE",   clue: "Rules and processes designed to ensure organizations meet requirements" },
+  { answer: "DATABASE",     clue: "A system that securely stores and manages digital information" },
+  { answer: "API",          clue: "A technology interface that allows different software systems to communicate with one another" },
+  { answer: "FINTECH",      clue: "Technology that enables financial services through digital platforms" },
+  { answer: "AUTHENTICATION", clue: "The process of securely verifying someone's identity" },
+];
+/* Note: "coinsurance" was supplied twice in the source list (once as an
+   Across clue, once as Down) with slightly different wording for the same
+   term. They've been merged into a single entry above so the grid doesn't
+   contain a duplicate word — edit WORDS if you'd like different wording. */
+
+/* ============================================================
+   2) SCORING — tune freely
+   ============================================================ */
+const POINTS_PER_CORRECT_WORD = 100;
+const TIME_BONUS_WINDOW_SECONDS = 600; // no time bonus left after this many seconds
+const TIME_BONUS_MAX = 300;            // max points awarded for speed
+
+/* ============================================================
+   3) CROSSWORD GENERATION (runs once on load)
+   ============================================================ */
+const GRID_SIZE = 34;
+function emptyGrid(){ return Array.from({length:GRID_SIZE}, () => Array(GRID_SIZE).fill(null)); }
+
+function canPlace(grid, answer, row, col, dir){
+  const len = answer.length;
+  if (dir === 'A'){
+    if (col < 0 || col + len > GRID_SIZE || row < 0 || row >= GRID_SIZE) return null;
+    if (col - 1 >= 0 && grid[row][col-1]) return null;
+    if (col + len < GRID_SIZE && grid[row][col+len]) return null;
+    let hasIntersection = false;
+    for (let i=0;i<len;i++){
+      const existing = grid[row][col+i];
+      if (existing){
+        if (existing !== answer[i]) return null;
+        hasIntersection = true;
+      } else {
+        if (row-1>=0 && grid[row-1][col+i]) return null;
+        if (row+1<GRID_SIZE && grid[row+1][col+i]) return null;
+      }
+    }
+    return { hasIntersection };
+  } else {
+    if (row < 0 || row + len > GRID_SIZE || col < 0 || col >= GRID_SIZE) return null;
+    if (row - 1 >= 0 && grid[row-1][col]) return null;
+    if (row + len < GRID_SIZE && grid[row+len][col]) return null;
+    let hasIntersection = false;
+    for (let i=0;i<len;i++){
+      const existing = grid[row+i][col];
+      if (existing){
+        if (existing !== answer[i]) return null;
+        hasIntersection = true;
+      } else {
+        if (col-1>=0 && grid[row+i][col-1]) return null;
+        if (col+1<GRID_SIZE && grid[row+i][col+1]) return null;
+      }
+    }
+    return { hasIntersection };
+  }
+}
+
+function place(grid, answer, row, col, dir){
+  for (let i=0;i<answer.length;i++){
+    if (dir==='A') grid[row][col+i] = answer[i];
+    else grid[row+i][col] = answer[i];
+  }
+}
+
+function generateCrossword(words){
+  const grid = emptyGrid();
+  const placed = [];
+  const sorted = [...words].sort((a,b)=> b.answer.length - a.answer.length);
+
+  const center = Math.floor(GRID_SIZE/2);
+  const first = sorted[0];
+  const startCol = center - Math.floor(first.answer.length/2);
+  place(grid, first.answer, center, startCol, 'A');
+  placed.push({ ...first, row: center, col: startCol, dir: 'A' });
+
+  for (let idx=1; idx<sorted.length; idx++){
+    const w = sorted[idx];
+    let best = null;
+    for (const p of placed){
+      for (let i=0;i<w.answer.length;i++){
+        for (let j=0;j<p.answer.length;j++){
+          if (w.answer[i] !== p.answer[j]) continue;
+          const newDir = p.dir === 'A' ? 'D' : 'A';
+          let row, col;
+          if (newDir === 'D'){ row = p.row - i; col = p.col + j; }
+          else { row = p.row + j; col = p.col - i; }
+          const res = canPlace(grid, w.answer, row, col, newDir);
+          if (res && res.hasIntersection && !best){
+            best = { row, col, dir: newDir };
+          }
+        }
+      }
+    }
+    if (best){
+      place(grid, w.answer, best.row, best.col, best.dir);
+      placed.push({ ...w, row: best.row, col: best.col, dir: best.dir });
+    } else {
+      for (let r=0; r<GRID_SIZE; r++){
+        const res = canPlace(grid, w.answer, r, 1, 'A');
+        if (res){
+          place(grid, w.answer, r, 1, 'A');
+          placed.push({ ...w, row: r, col: 1, dir: 'A' });
+          break;
+        }
+      }
+    }
+  }
+
+  let minR=GRID_SIZE, maxR=0, minC=GRID_SIZE, maxC=0;
+  for (let r=0;r<GRID_SIZE;r++) for (let c=0;c<GRID_SIZE;c++) if (grid[r][c]){
+    minR=Math.min(minR,r); maxR=Math.max(maxR,r); minC=Math.min(minC,c); maxC=Math.max(maxC,c);
+  }
+  const norm = placed.map(p => ({ ...p, row: p.row-minR, col: p.col-minC }));
+  const H = maxR-minR+1, W = maxC-minC+1;
+
+  const solutionGrid = Array.from({length:H}, () => Array(W).fill(null));
+  norm.forEach(p => {
+    for (let i=0;i<p.answer.length;i++){
+      const r = p.dir==='A' ? p.row : p.row+i;
+      const c = p.dir==='A' ? p.col+i : p.col;
+      solutionGrid[r][c] = p.answer[i];
+    }
+  });
+
+  let num = 1;
+  const numbers = {};
+  for (let r=0;r<H;r++){
+    for (let c=0;c<W;c++){
+      if (!solutionGrid[r][c]) continue;
+      const startsAcross = (c===0 || !solutionGrid[r][c-1]) && (c+1<W && solutionGrid[r][c+1]);
+      const startsDown   = (r===0 || !solutionGrid[r-1][c]) && (r+1<H && solutionGrid[r+1][c]);
+      if (startsAcross || startsDown) numbers[r+','+c] = num++;
+    }
+  }
+
+  norm.forEach(p => { p.number = numbers[p.row+','+p.col]; });
+  norm.sort((a,b)=> a.number - b.number || (a.dir==='A'?0:1) - (b.dir==='A'?0:1));
+
+  return { H, W, solutionGrid, placed: norm };
+}
+
+const PUZZLE = generateCrossword(WORDS);
+
+/* ============================================================
+   4) BUILD DOM GRID + CLUE LISTS
+   ============================================================ */
+const cellMeta = {}; // "r,c" -> { across: entryOrNull, down: entryOrNull }
+PUZZLE.placed.forEach(entry => {
+  for (let i=0;i<entry.answer.length;i++){
+    const r = entry.dir==='A' ? entry.row : entry.row+i;
+    const c = entry.dir==='A' ? entry.col+i : entry.col;
+    const key = r+','+c;
+    if (!cellMeta[key]) cellMeta[key] = {};
+    cellMeta[key][entry.dir] = entry;
+  }
+});
+
+const gridEl = document.getElementById('grid');
+const inputs = {}; // "r,c" -> <input>
+
+for (let r=0; r<PUZZLE.H; r++){
+  const tr = document.createElement('tr');
+  for (let c=0; c<PUZZLE.W; c++){
+    const td = document.createElement('td');
+    const key = r+','+c;
+    if (PUZZLE.solutionGrid[r][c]){
+      td.className = 'cell';
+      const n = numberFor(r,c);
+      if (n){
+        const label = document.createElement('div');
+        label.className = 'num-label';
+        label.textContent = n;
+        td.appendChild(label);
+      }
+      const input = document.createElement('input');
+      input.setAttribute('maxlength','1');
+      input.dataset.r = r; input.dataset.c = c;
+      td.appendChild(input);
+      inputs[key] = input;
+    }
+    tr.appendChild(td);
+  }
+  gridEl.appendChild(tr);
+}
+
+function numberFor(r,c){
+  for (const p of PUZZLE.placed){
+    if (p.row===r && p.col===c) return p.number;
+  }
+  return null;
+}
+
+/* clue lists */
+const acrossListEl = document.getElementById('acrossList');
+const downListEl = document.getElementById('downList');
+PUZZLE.placed.filter(p=>p.dir==='A').forEach(p=>{
+  const li = document.createElement('li');
+  li.dataset.key = p.row+','+p.col+',A';
+  li.innerHTML = '<b>'+p.number+'.</b>'+escapeHtml(p.clue);
+  li.addEventListener('click', ()=> selectWord(p));
+  acrossListEl.appendChild(li);
+});
+PUZZLE.placed.filter(p=>p.dir==='D').forEach(p=>{
+  const li = document.createElement('li');
+  li.dataset.key = p.row+','+p.col+',D';
+  li.innerHTML = '<b>'+p.number+'.</b>'+escapeHtml(p.clue);
+  li.addEventListener('click', ()=> selectWord(p));
+  downListEl.appendChild(li);
+});
+
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+/* ============================================================
+   5) GRID INTERACTION
+   ============================================================ */
+let currentEntry = null;
+const activeClueBanner = document.getElementById('activeClueBanner');
+
+function wordCells(entry){
+  const cells = [];
+  for (let i=0;i<entry.answer.length;i++){
+    const r = entry.dir==='A' ? entry.row : entry.row+i;
+    const c = entry.dir==='A' ? entry.col+i : entry.col;
+    cells.push([r,c]);
+  }
+  return cells;
+}
+
+function clearHighlights(){
+  document.querySelectorAll('#grid td.cell').forEach(td=>{
+    td.classList.remove('active','active-word');
+  });
+  document.querySelectorAll('.clues li').forEach(li=>li.classList.remove('active'));
+}
+
+function selectWord(entry, focusCell){
+  currentEntry = entry;
+  clearHighlights();
+  wordCells(entry).forEach(([r,c])=>{
+    const td = inputs[r+','+c].parentElement;
+    td.classList.add('active-word');
+  });
+  const li = document.querySelector('.clues li[data-key="'+entry.row+','+entry.col+','+entry.dir+'"]');
+  if (li){ li.classList.add('active'); if (li.scrollIntoView) li.scrollIntoView({block:'nearest'}); }
+  activeClueBanner.innerHTML = '<b>'+(entry.dir==='A'?'Across':'Down')+' '+entry.number+'.</b> ' + escapeHtml(entry.clue);
+
+  let target = focusCell;
+  if (!target){
+    target = wordCells(entry).find(([r,c]) => !inputs[r+','+c].value) || wordCells(entry)[0];
+  }
+  const [tr,tc] = target;
+  inputs[tr+','+tc].parentElement.classList.add('active');
+  inputs[tr+','+tc].focus();
+}
+
+Object.entries(inputs).forEach(([key, input])=>{
+  const [r,c] = key.split(',').map(Number);
+  input.addEventListener('focus', ()=>{
+    const meta = cellMeta[key];
+    let entry = currentEntry && cellMeta[key][currentEntry.dir] === currentEntry ? currentEntry : (meta.A || meta.D);
+    selectWord(entry, [r,c]);
+    startTimerIfNeeded();
+  });
+  input.addEventListener('click', (e)=>{
+    const meta = cellMeta[key];
+    if (meta.A && meta.D){
+      // toggle direction on repeated click of an intersection cell
+      const other = currentEntry === meta.A ? meta.D : meta.A;
+      selectWord(other, [r,c]);
+    }
+  });
+  input.addEventListener('input', (e)=>{
+    let val = input.value.toUpperCase().replace(/[^A-Z]/g,'');
+    input.value = val.slice(-1);
+    startTimerIfNeeded();
+    if (input.value && currentEntry){
+      moveWithinWord(currentEntry, r, c, 1);
+    }
+  });
+  input.addEventListener('keydown', (e)=>{
+    if (e.key === 'Backspace' && !input.value && currentEntry){
+      moveWithinWord(currentEntry, r, c, -1, true);
+    } else if (e.key === 'ArrowRight'){ moveGrid(r, c+1); }
+    else if (e.key === 'ArrowLeft'){ moveGrid(r, c-1); }
+    else if (e.key === 'ArrowDown'){ moveGrid(r+1, c); }
+    else if (e.key === 'ArrowUp'){ moveGrid(r-1, c); }
+  });
+});
+
+function moveGrid(r,c){
+  const key = r+','+c;
+  if (inputs[key]) inputs[key].focus();
+}
+
+function moveWithinWord(entry, r, c, dir, isBackspace){
+  const cells = wordCells(entry);
+  const idx = cells.findIndex(([rr,cc]) => rr===r && cc===c);
+  const nextIdx = idx + dir;
+  if (nextIdx >= 0 && nextIdx < cells.length){
+    const [nr,nc] = cells[nextIdx];
+    if (isBackspace) inputs[nr+','+nc].value = '';
+    inputs[nr+','+nc].focus();
+  }
+}
+
+/* ============================================================
+   6) TIMER
+   ============================================================ */
+let startTime = null;
+let timerInterval = null;
+let finished = false;
+const timerText = document.getElementById('timerText');
+const timerPill = document.getElementById('timerPill');
+
+function startTimerIfNeeded(){
+  if (startTime || finished) return;
+  startTime = Date.now();
+  timerPill.classList.add('running');
+  timerInterval = setInterval(updateTimer, 1000);
+}
+function updateTimer(){
+  const secs = Math.floor((Date.now()-startTime)/1000);
+  const m = String(Math.floor(secs/60)).padStart(2,'0');
+  const s = String(secs%60).padStart(2,'0');
+  timerText.textContent = m+':'+s;
+}
+function stopTimer(){
+  clearInterval(timerInterval);
+  timerPill.classList.remove('running');
+}
+function elapsedSeconds(){
+  if (!startTime) return 0;
+  return Math.floor((Date.now()-startTime)/1000);
+}
+
+/* ============================================================
+   7) CHECK / FINISH / RESET
+   ============================================================ */
+document.getElementById('checkBtn').addEventListener('click', ()=>{
+  Object.entries(inputs).forEach(([key, input])=>{
+    const [r,c] = key.split(',').map(Number);
+    const td = input.parentElement;
+    td.classList.remove('correct','incorrect');
+    if (!input.value) return;
+    if (input.value === PUZZLE.solutionGrid[r][c]) td.classList.add('correct');
+    else td.classList.add('incorrect');
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if (!confirm('Reset the whole puzzle? This clears your answers and timer.')) return;
+  Object.values(inputs).forEach(input=>{
+    input.value='';
+    input.parentElement.classList.remove('correct','incorrect');
+  });
+  clearHighlights();
+  stopTimer();
+  startTime = null;
+  finished = false;
+  timerText.textContent = '00:00';
+  document.getElementById('scorePanel').classList.remove('show');
+  activeClueBanner.textContent = 'Click a square or a clue to begin.';
+});
+
+function computeResult(){
+  let correctWords = 0;
+  PUZZLE.placed.forEach(entry=>{
+    const cells = wordCells(entry);
+    const ok = cells.every(([r,c]) => inputs[r+','+c].value === PUZZLE.solutionGrid[r][c]);
+    if (ok) correctWords++;
+  });
+  const totalWords = PUZZLE.placed.length;
+  const secs = elapsedSeconds();
+  const timeBonus = Math.max(0, Math.round(TIME_BONUS_MAX * (1 - secs / TIME_BONUS_WINDOW_SECONDS)));
+  const score = correctWords * POINTS_PER_CORRECT_WORD + timeBonus;
+  return { correctWords, totalWords, secs, score };
+}
+
+document.getElementById('finishBtn').addEventListener('click', ()=>{
+  finished = true;
+  stopTimer();
+  const result = computeResult();
+  document.getElementById('scorePanel').classList.add('show');
+  document.getElementById('scoreBig').textContent = result.score + ' pts';
+  document.getElementById('statCorrect').textContent = result.correctWords + ' / ' + result.totalWords + ' words correct';
+  const m = String(Math.floor(result.secs/60)).padStart(2,'0');
+  const s = String(result.secs%60).padStart(2,'0');
+  document.getElementById('statTime').textContent = 'Time: ' + m+':'+s;
+  window._lastResult = result;
+  const panel = document.getElementById('scorePanel');
+  if (panel.scrollIntoView) panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+});
+
+/* ============================================================
+   8) LEADERBOARD (persisted via serverless function + Netlify Blobs)
+   ============================================================ */
+const API = '/api/leaderboard';
+
+async function fetchLeaderboard(){
+  const status = document.getElementById('lbStatus');
+  status.textContent = 'Loading…';
+  status.classList.remove('error');
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    renderLeaderboard(data);
+    status.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  } catch (err){
+    status.textContent = 'Could not load the shared leaderboard. Make sure this site is deployed on Netlify with the /netlify/functions folder intact.';
+    status.classList.add('error');
+    renderLeaderboard([]);
+  }
+}
+
+function renderLeaderboard(list){
+  const body = document.getElementById('leaderboardBody');
+  const empty = document.getElementById('lbEmpty');
+  body.innerHTML = '';
+  if (!list.length){ empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  list
+    .slice()
+    .sort((a,b)=> b.score - a.score)
+    .slice(0,50)
+    .forEach((entry, i)=>{
+      const tr = document.createElement('tr');
+      tr.className = 'rank-' + (i+1);
+      const mm = entry.timeSeconds != null ? String(Math.floor(entry.timeSeconds/60)).padStart(2,'0')+':'+String(entry.timeSeconds%60).padStart(2,'0') : '—';
+      tr.innerHTML = '<td><span class="rank-badge">'+(i+1)+'</span></td>'+
+        '<td>'+escapeHtml(entry.name)+'</td>'+
+        '<td>'+entry.score+'</td>'+
+        '<td>'+mm+'</td>';
+      body.appendChild(tr);
+    });
+}
+
+document.getElementById('submitScoreBtn').addEventListener('click', async ()=>{
+  const nameInput = document.getElementById('nameInput');
+  const emailInput = document.getElementById('emailInput');
+  const status = document.getElementById('submitStatus');
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  if (!name){ status.textContent = 'Please enter your name first.'; return; }
+  if (!email || !email.includes('@')){ status.textContent = 'Please enter a valid email.'; return; }
+  if (!window._lastResult){ status.textContent = 'Finish the puzzle first.'; return; }
+  const btn = document.getElementById('submitScoreBtn');
+  btn.disabled = true;
+  status.textContent = 'Submitting…';
+  try {
+    const res = await fetch(API, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name,
+        email,
+        score: window._lastResult.score,
+        correct: window._lastResult.correctWords,
+        total: window._lastResult.totalWords,
+        timeSeconds: window._lastResult.secs
+      })
+    });
+    if (!res.ok) throw new Error('failed');
+    status.textContent = 'Submitted! You are on the leaderboard.';
+    nameInput.value = '';
+    emailInput.value = '';
+    fetchLeaderboard();
+  } catch(err){
+    status.textContent = 'Could not submit — check that the site is deployed on Netlify with functions enabled.';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('refreshLbBtn').addEventListener('click', fetchLeaderboard);
+
+document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
+  const status = document.getElementById('lbStatus');
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    if (!data.length){ status.textContent = 'No scores to export yet.'; return; }
+    const rows = [['Rank','Name','Email','Score','Correct','Total','Time (seconds)','Submitted At']];
+    data.slice().sort((a,b)=>b.score-a.score).forEach((e,i)=>{
+      rows.push([i+1, e.name, e.email||'', e.score, e.correct ?? '', e.total ?? '', e.timeSeconds ?? '', e.submittedAt ?? '']);
+    });
+    const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nationsbenefits-crossword-leaderboard.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(err){
+    status.textContent = 'Could not export — check that the site is deployed on Netlify with functions enabled.';
+    status.classList.add('error');
+  }
+});
+
+/* initial load */
+fetchLeaderboard();
+</script>
+</body>
+</html>
